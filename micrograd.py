@@ -8,13 +8,50 @@ class Value:
         return f"Value(data={self.data})"
     
     def __add__(self, other):
-        return Value(self.data + other.data, (self, other))
+        out = Value(self.data + other.data, (self, other))
+    
+        def _backward():
+            self.grad += out.grad
+            other.grad += out.grad
+        out._backward = _backward
+    
+        return out
    
     def __mul__(self, other):
-        return Value(self.data * other.data, (self, other))
+        out = Value(self.data * other.data, (self, other))
+    
+        def _backward():
+            self.grad += other.data * out.grad
+            other.grad += self.data * out.grad
+        out._backward = _backward
+    
+        return out
+    
+    def backward(self):
+        topo = []
+        visited = set()
+    
+        def build_topo(v):
+            if v not in visited:
+                visited.add(v)
+                for child in v._prev:
+                    build_topo(child)
+                topo.append(v)
+    
+        build_topo(self)
+        self.grad = 1.0
+        for node in reversed(topo):
+            node._backward()
+    
+    def __init__(self, data, _children=()):
+        self.data = data
+        self.grad = 0.0
+        self._prev = set(_children)
+        self._backward = lambda: None
 
-a = Value(3.0)
-b = Value(4.0)
+a = Value(2.0)
+b = Value(3.0)
 c = a * b
-print(c)
-print(c._prev)
+c.backward()
+print(f"a.grad = {a.grad}")
+print(f"b.grad = {b.grad}")
