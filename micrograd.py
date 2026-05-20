@@ -62,8 +62,3 @@ class Value:
         self._backward = lambda: None
 
     
-
-a = Value(0.5)
-b = a.tanh()
-b.backward()
-print(f"a.grad = {a.grad}")
