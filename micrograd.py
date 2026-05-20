@@ -61,4 +61,16 @@ class Value:
         self._prev = set(_children)
         self._backward = lambda: None
 
+    def __sub__(self, other):
+        return self + Value(-other.data)
+    
+    def __pow__(self, other):
+        t = self.data ** other
+        out = Value(t, (self,))
+    
+        def _backward():
+            self.grad += other * (self.data ** (other - 1)) * out.grad
+        out._backward = _backward
+    
+        return out
     
