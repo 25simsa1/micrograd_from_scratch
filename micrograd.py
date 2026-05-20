@@ -43,15 +43,27 @@ class Value:
         for node in reversed(topo):
             node._backward()
     
+    def tanh(self):
+        import math
+        x = self.data
+        t = (math.exp(2*x) - 1) / (math.exp(2*x) + 1)
+        out = Value(t, (self,))
+    
+        def _backward():
+            self.grad += (1 - t**2) * out.grad
+        out._backward = _backward
+    
+        return out
+    
     def __init__(self, data, _children=()):
         self.data = data
         self.grad = 0.0
         self._prev = set(_children)
         self._backward = lambda: None
 
-a = Value(2.0)
-b = Value(3.0)
-c = a * b
-c.backward()
+    
+
+a = Value(0.5)
+b = a.tanh()
+b.backward()
 print(f"a.grad = {a.grad}")
-print(f"b.grad = {b.grad}")
